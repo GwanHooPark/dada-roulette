@@ -1,6 +1,22 @@
 <template>
 	<div>
 		<h3>{{ msg }}</h3>
+		<div class="container">
+			<button @click="addItem()">아이템 추가</button>
+			<div v-for="(item, index) in items" :key="index">
+				<input v-model="item.value" :key="index" />
+			</div>
+			<div class="input-group" style="margin-bottom: 10px">
+				<input
+					type="text"
+					class="form-control"
+					placeholder="할일을 입력하세요"
+				/>
+				<span class="input-group-btn">
+					<button class="btn btn-default" type="button">추가</button>
+				</span>
+			</div>
+		</div>
 		<div class="roulette-outer">
 			<div class="roulette-pin"></div>
 			<div
@@ -8,7 +24,7 @@
 				@click="play()"
 				:class="{ active: isActive }"
 			>
-				play
+				GoGo!
 			</div>
 			<div class="roulette" :style="rouletteRotateAngle">
 				<!-- 값 영역 -->
@@ -16,6 +32,7 @@
 					<div
 						class="item"
 						:style="itemStyles[index]"
+						:class="{ blink: isSelected(index) }"
 						v-for="(item, index) in items"
 						:key="index"
 					>
@@ -34,18 +51,9 @@
 			</div>
 		</div>
 		<div>
-			원하는 결과 :
-			<select v-model="wantResult">
-				<option value="-1">랜덤</option>
-				<option
-					v-for="(item, index) in items"
-					:key="index"
-					:value="index"
-				>
-					{{ item.value }}
-				</option>
-			</select>
+			당첨 : <span>{{ result }}</span>
 		</div>
+		<b-button variant="primary">Button</b-button>
 	</div>
 </template>
 
@@ -57,23 +65,22 @@ export default {
 	},
 	data() {
 		return {
-			items: [
-				{ value: '100점' },
-				{ value: '200점' },
-				{ value: '300점' },
-				{ value: '400점' },
-				{ value: '10점' },
-				{ value: '0점' },
-			],
+			items: [],
 			itemStyles: [],
 			lineStyles: [],
 			current: 0,
 			count: 0,
 			isActive: true,
-			wantResult: -1,
+			result: '',
 		};
 	},
 	computed: {
+		isSelected() {
+			return index => {
+				if (!this.result) return false;
+				return index == this.current;
+			};
+		},
 		segment() {
 			return 360 / this.items.length;
 		},
@@ -97,7 +104,13 @@ export default {
 		this.drawRoulette();
 	},
 	methods: {
+		addItem() {
+			this.items.push({ value: '' });
+			this.drawRoulette();
+		},
 		drawRoulette() {
+			this.itemStyles = [];
+			this.lineStyles = [];
 			this.items.forEach((el, idx) => {
 				this.itemStyles.push({
 					transform: `rotate(${this.segment * idx}deg)`,
@@ -110,14 +123,16 @@ export default {
 		play() {
 			if (!this.isActive) return;
 			this.count++;
-			this.current =
-				this.wantResult < 0
-					? Math.floor(Math.random() * this.items.length)
-					: this.wantResult;
 			this.isActive = false;
+			this.reset();
 			setTimeout(() => {
 				this.isActive = true;
+				this.result = this.items[this.current].value;
 			}, 5000);
+		},
+		reset() {
+			this.current = Math.floor(Math.random() * this.items.length);
+			this.result = '';
 		},
 	},
 };
@@ -170,7 +185,7 @@ export default {
 	font-size: 21px;
 	font-weight: bold;
 	color: #fff;
-	line-height: 71px;
+	line-height: 76px;
 	font-family: sans-serif;
 }
 .active {
@@ -200,5 +215,13 @@ export default {
 }
 .roulette-outer > .roulette {
 	transition: transform 5s ease-in-out;
+}
+@keyframes blink-effect {
+	50% {
+		opacity: 0;
+	}
+}
+.blink {
+	animation: blink-effect 1s step-end infinite;
 }
 </style>
